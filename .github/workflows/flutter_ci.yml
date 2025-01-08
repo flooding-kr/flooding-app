@@ -1,0 +1,153 @@
+name: Flutter CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  flutter_test:
+    name: Run flutter test and analyze
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout Flutter repository
+        uses: actions/checkout@v4
+
+      - name: Copy Secret To application module .env
+        run: echo "API_URL=$MAP_API_KEY" >> .env
+        env:
+          MAP_API_KEY: ${{ secrets.API_URL }}
+
+      - name: Copy Secret To Application module google-services.json
+        run: echo $GOOGLE_SERVICES >> android/app/google-services.json
+        env:
+          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v3.12.0
+        with:
+          distribution: 'oracle'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: 3.27.1
+
+      - name: Checking Flutter Version
+        run: flutter --version
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Analyze project source
+        run: flutter analyze
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Build AppBundle
+        run: flutter build appbundle
+
+      - name: Set timestamp
+        id: timestamp
+        run: echo "TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_ENV
+
+      - name: Notify Success
+        if: success()
+        env:
+          DATA: >
+            {
+              "embeds": [
+                {
+                  "title": "CI 성공 :)",
+                  "description": "** COMMIT MESSAGE **\n> [${{ github.event.head_commit.message }}](${{ github.event.head_commit.url }})\n",
+                  "color": 46335,
+                  "timestamp": "${{ env.TIMESTAMP }}",
+                  "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                  "author": {
+                    "name": "${{ github.event.sender.login }}",
+                    "url": "${{ github.event.sender.html_url }}",
+                    "icon_url": "${{ github.event.sender.avatar_url }}"
+                  },
+                  "thumbnail": {
+                    "url": "${{ github.event.sender.avatar_url }}"
+                  },
+                  "image": {
+                    "url": "${{ secrets.SUCCESS_FLUTTER_IMAGE }}"
+                  },
+                  "fields": [
+                    {
+                      "name": "Repository",
+                      "value": "> [${{ github.repository }}](https://github.com/${{ github.repository }})\n"
+                    },
+                    {
+                      "name": "Branch",
+                      "value": "> [${{ github.ref }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})",
+                      "inline": false
+                    },
+                    {
+                      "name": "Workflow",
+                      "value": "> [CI](${{
+                        github.server_url
+                      }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+                      "inline": false
+                    }
+                  ]
+                }
+              ]
+            }
+        run: >
+          curl -X POST -H 'Content-type:application/json'
+          -d "$DATA"
+          "${{ secrets.DISCORD_WEBHOOK_URL }}"
+
+      - name: Notify Failure
+        if: failure()
+        env:
+          DATA: >
+            {
+              "embeds": [
+                {
+                  "title": "CI 실패 :(",
+                  "description": "** COMMIT MESSAGE **\n> [${{ github.event.head_commit.message }}](${{ github.event.head_commit.url }})\n",
+                  "color": 16711680,
+                  "timestamp": "${{ env.TIMESTAMP }}",
+                  "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                  "author": {
+                    "name": "${{ github.event.sender.login }}",
+                    "url": "${{ github.event.sender.html_url }}",
+                    "icon_url": "${{ github.event.sender.avatar_url }}"
+                  },
+                  "thumbnail": {
+                    "url": "${{ github.event.sender.avatar_url }}"
+                  },
+                  "image": {
+                    "url": "${{ secrets.FAIL_FLUTTER_IMAGE }}"
+                  },
+                  "fields": [
+                    {
+                      "name": "Repository",
+                      "value": "> [${{ github.repository }}](https://github.com/${{ github.repository }})\n"
+                    },
+                    {
+                      "name": "Branch",
+                      "value": "> [${{ github.ref }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})",
+                      "inline": false
+                    },
+                    {
+                      "name": "Workflow",
+                      "value": "> [CI](${{
+                        github.server_url
+                      }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+                      "inline": false
+                    }
+                  ]
+                }
+              ]
+            }
+        run: >
+          curl -X POST -H 'Content-type:application/json'
+          -d "$DATA"
+          "${{ secrets.DISCORD_WEBHOOK_URL }}"
