@@ -18,11 +18,6 @@ jobs:
         env:
           MAP_API_KEY: ${{ secrets.API_URL }}
 
-      - name: Copy Secret To Application module google-services.json
-        run: echo $GOOGLE_SERVICES >> android/app/google-services.json
-        env:
-          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
-
       - name: Setup Java
         uses: actions/setup-java@v3.12.0
         with:
