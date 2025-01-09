@@ -2,7 +2,8 @@ name: Flutter CI
 
 on:
   push:
-    - develop
+    branches:
+      - develop
   pull_request:
 
 jobs:
