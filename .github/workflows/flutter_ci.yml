@@ -2,6 +2,7 @@ name: Flutter CI
 
 on:
   push:
+    - develop
   pull_request:
 
 jobs:
