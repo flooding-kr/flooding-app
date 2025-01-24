@@ -52,6 +52,7 @@ jobs:
         run: |
           DATA=$(cat <<EOF
           {
+            "content": "<@749992025985777755>, <@1042669793481871361>, <@930099449307467786>", 
             "embeds": [
               {
                 "title": "CI 성공 :)",
@@ -92,7 +93,7 @@ jobs:
           EOF
           )
           curl -X POST -H 'Content-type:application/json' -d "$DATA" "${{ secrets.DISCORD_WEBHOOK_URL }}"
-
+      
       - name: Notify Success for PR
         if: github.event_name == 'pull_request' && success()
         env:
@@ -102,6 +103,7 @@ jobs:
         run: |
           DATA=$(cat <<EOF
           {
+            "content": "<@749992025985777755>, <@1042669793481871361>, <@930099449307467786>", 
             "embeds": [
               {
                 "title": "CI 성공 :)",
@@ -151,6 +153,7 @@ jobs:
         run: |
           DATA=$(cat <<EOF
           {
+            "content": "<@749992025985777755>, <@1042669793481871361>, <@930099449307467786>", 
             "embeds": [
               {
                 "title": "CI 실패 :(",
